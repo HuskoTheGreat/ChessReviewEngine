@@ -73,17 +73,63 @@ class GameReview:
         return None
 
 
+# How deep to look for a Stockfish download below each search folder, and folders never worth entering.
+SEARCH_DEPTH = 4
+SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", "site-packages", "src", "wiki"}
+
+
+def _is_stockfish_binary(path: str) -> bool:
+    name = os.path.basename(path).lower()
+    if not name.startswith("stockfish") or not os.path.isfile(path):
+        return False
+    if os.name == "nt":
+        return name.endswith(".exe")
+    return "." not in name and os.access(path, os.X_OK)
+
+
+def search_stockfish(roots: list[str], max_depth: int = SEARCH_DEPTH) -> str | None:
+    """Look through folders (and their subfolders) for a Stockfish executable, nearest first."""
+    seen = set()
+    for root in roots:
+        root = os.path.abspath(root)
+        if root in seen or not os.path.isdir(root):
+            continue
+        seen.add(root)
+        level = [root]
+        for _ in range(max_depth + 1):
+            next_level = []
+            for folder in level:
+                try:
+                    entries = sorted(os.scandir(folder), key=lambda e: e.name)
+                except OSError:
+                    continue
+                for entry in entries:
+                    if _is_stockfish_binary(entry.path):
+                        return entry.path
+                    if entry.is_dir(follow_symlinks=False) and entry.name not in SKIP_DIRS:
+                        next_level.append(entry.path)
+            level = next_level
+    return None
+
+
 def find_stockfish(explicit: str | None = None) -> str:
-    """Locate a Stockfish binary: --engine flag, STOCKFISH_PATH, then PATH."""
+    """Locate a Stockfish binary: --engine flag, STOCKFISH_PATH, PATH, then nearby folders."""
     candidates = [explicit, os.environ.get("STOCKFISH_PATH")]
     candidates += [shutil.which(name) for name in ("stockfish", "stockfish.exe")]
-    candidates += ["/usr/games/stockfish", "/usr/local/bin/stockfish", "/opt/homebrew/bin/stockfish"]
     for path in candidates:
         if path and os.path.isfile(path):
             return path
+    if explicit is None:
+        # The current folder, this program's folder and the folder above it (where a
+        # Stockfish zip is often unpacked next to the program), then Downloads.
+        project = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        roots = [os.getcwd(), project, os.path.dirname(project), os.path.join(os.path.expanduser("~"), "Downloads")]
+        found = search_stockfish(roots)
+        if found:
+            return found
     raise FileNotFoundError(
         "Could not find Stockfish. Install it (https://stockfishchess.org/download/) and either "
-        "put it on your PATH, set STOCKFISH_PATH, or pass --engine /path/to/stockfish."
+        "unzip it next to this program, put it on your PATH, set STOCKFISH_PATH, or pass --engine /path/to/stockfish."
     )
 
 
