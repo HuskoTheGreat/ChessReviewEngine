@@ -16,7 +16,9 @@ an accuracy score for each side, and plain-language tips about patterns in your 
    pip install -e .
    ```
 
-The program finds Stockfish on your `PATH`. Otherwise set `STOCKFISH_PATH` or pass `--engine`:
+The program finds Stockfish on your `PATH`, or by searching the current folder, the program's folder,
+the folder above it and your Downloads folder, so unzipping Stockfish next to this program is enough.
+Otherwise set `STOCKFISH_PATH` or pass `--engine`:
 
 ```
 chessreview games.pgn --engine "C:\Tools\stockfish\stockfish.exe"
@@ -36,9 +38,18 @@ chessreview my_games.pgn --player YourChessComName
 
 `--player` focuses the feedback on your moves and adds an overall summary across all the games in the file.
 
+Leave out the file name and the program lists the `.pgn` files in the current folder (newest first)
+and asks which one to review. If the current folder has none, it uses the folder of the last PGN
+you reviewed, or one you set with `--games-dir`:
+
+```
+chessreview --games-dir "C:\Users\you\Documents\Chess Games" --player YourChessComName
+```
+
 | Option | What it does |
 | --- | --- |
 | `-p, --player NAME` | Your chess.com username |
+| `-g, --games-dir DIR` | Folder to pick PGN files from when no file is given (remembered) |
 | `-d, --depth N` | Stockfish depth per position (default 16; higher is slower and stronger) |
 | `-n, --max-games N` | Only analyze the first N games |
 | `-a, --all-moves` | List every move, not just the errors |
