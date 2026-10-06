@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chessreview"
+version = "0.1.0"
+description = "Analyze chess.com PGN exports with Stockfish and get feedback on your play"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = ["chess>=1.10"]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+chessreview = "chessreview.cli:main"
+
+[tool.setuptools]
+packages = ["chessreview"]
