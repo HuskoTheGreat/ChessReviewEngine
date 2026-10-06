@@ -116,7 +116,6 @@ def find_stockfish(explicit: str | None = None) -> str:
     """Locate a Stockfish binary: --engine flag, STOCKFISH_PATH, PATH, then nearby folders."""
     candidates = [explicit, os.environ.get("STOCKFISH_PATH")]
     candidates += [shutil.which(name) for name in ("stockfish", "stockfish.exe")]
-    candidates += ["/usr/games/stockfish", "/usr/local/bin/stockfish", "/opt/homebrew/bin/stockfish"]
     for path in candidates:
         if path and os.path.isfile(path):
             return path
